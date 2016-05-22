@@ -33,7 +33,7 @@ class Field {
 
     setCellNumber (line,column, number) {
         if (this.getCell(line,column)) {
-            this.field[line][column].number = number
+            this.field[line][column].number = number;
         }
     }
 
@@ -58,48 +58,65 @@ class Field {
         $gameField.html(fieldHTML)
     }
 
-    static isPossiblePathExist (firstCell, secondCell, numberOfSteps) {
+    static isPossiblePathExist (firstCell, secondCell, currentStep) {
+        let stepsLeft = secondCell.number - currentStep;
         let verticalDifference = Math.abs(firstCell.line-secondCell.line);
         let horizontalDifference = Math.abs(firstCell.column-secondCell.column);
-        if (verticalDifference+horizontalDifference<=numberOfSteps) {
+        if (verticalDifference+horizontalDifference<=stepsLeft) {
             return true
         }
     }
 
     countPossiblePaths () {
         let self = this;
-        let startCell = self.field[1][2];
-        let targetCell = self.field[3][2];
-        let steps = 2;
+        let startCell = self.field[2][3];
+        let targetCell = self.field[4][3];
+        let numberOfStep = 1;
         let differentPaths = 0;
-        function findPath(currentCell, targetCell, steps, path=[]) {
-            if (steps === 0) {
-                if (currentCell.line === targetCell.line && currentCell.column === targetCell.column && steps===0) {
+        function findPath(currentCell, targetCell, currentStep, path=[[currentCell.line, currentCell.column]]) {
+            if (currentStep === targetCell.number) {
+                if (currentCell.line === targetCell.line && currentCell.column === targetCell.column) {
                     console.log('path has been found');
+                    console.log(path);
                     differentPaths++
                 }
-            } else if (Field.isPossiblePathExist(currentCell, targetCell, steps)) {
+            } else if (Field.isPossiblePathExist(currentCell, targetCell, currentStep)) {
                 let topCell = self.getCell(currentCell.line-1, currentCell.column);
                 let rightCell = self.getCell(currentCell.line, currentCell.column+1);
                 let bottomCell = self.getCell(currentCell.line+1, currentCell.column);
                 let leftCell = self.getCell(currentCell.line, currentCell.column-1);
                 let possibleCells = [topCell, rightCell, bottomCell, leftCell];
-                possibleCells.forEach ( (possibleCell) => {
-                    let alreadyUsed = path.filter ( (usedCell) => {
-                        return usedCell.line === possibleCell.line && usedCell.column === possibleCell.column
-                    });
+                possibleCells.forEach( (possibleCell) => {
+                    if (possibleCell) {
+                        if (Field.checkNextCell(possibleCell, targetCell, path)) {
+                            let cellCoordinates = [[possibleCell.line, possibleCell.column]];
+                            let newPath = path.concat(cellCoordinates);
+                            findPath(possibleCell, targetCell, currentStep+1, newPath);
+                        }
+                    }
 
+                })
+            }
+        }
+        findPath(startCell, targetCell, numberOfStep);
+        console.log(differentPaths)
+    }
 
-                });
-
+    static checkNextCell (cell, targetCell, usedCellsPath) {
+        let cellsInPath = [];
+        if (usedCellsPath.length !== 0) {
+            cellsInPath = usedCellsPath.filter( (usedCell) => {
+                return usedCell[0] === cell.line && usedCell[1] === cell.column
+            });
+        }
+        if (cellsInPath.length === 0 && (!cell.isUsed)) {
+            if (cell.line === targetCell.line && cell.column === targetCell.column) {
+                return true
+            } else if (!cell.number) {
+                return true
             }
 
-
-
-
-
         }
-        findPath(startCell, targetCell, steps)
     }
 
 }
@@ -110,12 +127,12 @@ field.createEmptyField();
 (function setField () {
     field.setCellNumber(1,2, 3);
     field.setCellNumber(1,4, 2);
-    field.setCellNumber(2,3, 7);
+    field.setCellNumber(2,3, 23);
     field.setCellNumber(2,4, 2);
     field.setCellNumber(3,1,3);
     field.setCellNumber(3,2,3);
     field.setCellNumber(4,2, 3);
-    field.setCellNumber(4,3, 7);
+    field.setCellNumber(4,3, 23);
     field.setCellNumber(5,3, 5);
     field.setCellNumber(5,8, 3);
     field.setCellNumber(7,4,3);
@@ -127,9 +144,15 @@ field.createEmptyField();
     field.setCellNumber(9,4,3);
     field.setCellNumber(9,5, 3);
     field.setCellNumber(9,7,3);
+    field.setCellNumber(1,7, 2);
+    field.setCellNumber(2,7, 2);
+    field.setCellNumber(3,7, 2);
+    field.setCellNumber(4,7, 2);
 }());
+let startTime = window.performance.now();
 field.countPossiblePaths();
-
+let finishTime = window.performance.now();
+console.log(finishTime-startTime);
 $(document).ready(function () {
 
     field.drawField();
