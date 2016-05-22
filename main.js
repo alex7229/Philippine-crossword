@@ -1,5 +1,6 @@
 'use strict';
 
+
 class Field {
 
     constructor (width, height) {
