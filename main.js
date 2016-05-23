@@ -19,7 +19,7 @@ class Field {
                     line: line,
                     column: column,
                     isUsed: false,
-                    backgroundType: false
+                    backgroundType: 'empty'
                 }
             }
         }
@@ -33,7 +33,12 @@ class Field {
 
     setCellNumber (line,column, number) {
         if (this.getCell(line,column)) {
-            this.field[line][column].number = number;
+            let cell = this.field[line][column];
+            cell.number = number;
+            if (number===1) {
+                cell.isUsed = true;
+                cell.backgroundType = 'used1';
+            }
         }
     }
 
@@ -46,11 +51,19 @@ class Field {
         this.field.forEach( (line) => {
             let lineHTML = ``;
             line.forEach( (cell) => {
-                if (cell.number === false) {
-                    lineHTML+=`<div class="cell" style="background-image: url(images/empty.png); background-size: contain"></div>`
-                } else {
-                    lineHTML+=`<div class="cell" style="background-image: url(images/empty.png); background-size: contain">${cell.number}</div>`
+                let backImage = `background-image: url(images/${cell.backgroundType}.png); `;
+                let backColor = 'background-color: #E8F0F0; ';
+                let backSize = 'background-size: contain; ';
+                let color = 'color: black; ';
+                let number = '';
+                if (cell.isUsed) {
+                    backColor = `background-color: #404440; `;
+                    color = 'color: white; '
                 }
+                if (cell.number) {
+                    number = cell.number
+                }
+                lineHTML += `<div class="cell" style="${backColor}${backImage}${backSize}${color}">${number}</div>`;
             });
             lineHTML+=`<br>`;
             fieldHTML+=lineHTML
@@ -67,18 +80,17 @@ class Field {
         }
     }
 
-    countPossiblePaths () {
+    countPossiblePaths (startCell ,targetCell) {
         let self = this;
-        let startCell = self.field[2][3];
-        let targetCell = self.field[4][3];
+       // let startCell = self.field[2][3];
+        //let targetCell = self.field[4][3];
         let numberOfStep = 1;
-        let differentPaths = 0;
+        let paths = [];
         function findPath(currentCell, targetCell, currentStep, path=[[currentCell.line, currentCell.column]]) {
             if (currentStep === targetCell.number) {
                 if (currentCell.line === targetCell.line && currentCell.column === targetCell.column) {
                     console.log('path has been found');
-                    console.log(path);
-                    differentPaths++
+                    paths.push(path)
                 }
             } else if (Field.isPossiblePathExist(currentCell, targetCell, currentStep)) {
                 let topCell = self.getCell(currentCell.line-1, currentCell.column);
@@ -99,7 +111,50 @@ class Field {
             }
         }
         findPath(startCell, targetCell, numberOfStep);
-        console.log(differentPaths)
+        if (paths.length===1) {
+            this.calculateBackground(paths[0])
+        } else if (paths.length >=1) {
+          /*  paths.forEach( (path) => {
+                this.calculateBackground(path)
+            })*/
+            this.calculateBackground(paths[0])
+        }
+    }
+
+    calculateField () {
+        for (let line=1; line<=this.height; line++) {
+            for (let column = 1; column<=this.width; column++) {
+                let startCell = this.field[line][column];
+                if (!startCell.isUsed && startCell.number) {
+                    let possibleCells = this.findPossibleTargetCells(startCell);
+                    possibleCells.forEach( (possibleCell) => {
+                        this.countPossiblePaths(startCell, possibleCell)
+                    })
+                }
+            }
+        }
+    }
+
+    findPossibleTargetCells (cell) {
+        let targetCells = [];
+        let possibleCell;
+        let maximumDistance = cell.number-1;
+        let startPointLine = cell.line-maximumDistance;
+        let startPointColumn = cell.column-maximumDistance;
+        let finishPointLine = cell.line+maximumDistance;
+        let finishPointColumn = cell.column+maximumDistance;
+        for (let line = startPointLine; line<=finishPointLine; line++) {
+            for (let column = startPointColumn; column<=finishPointColumn; column++) {
+                if (cell.line === line && cell.column === column) continue;
+                if (possibleCell = this.getCell(line, column)) {
+                    if (possibleCell.number && possibleCell.number === cell.number && (!possibleCell.isUsed)) {
+                        targetCells.push(possibleCell)
+                    }
+
+                }
+            }
+        }
+        return targetCells
     }
 
     static checkNextCell (cell, targetCell, usedCellsPath) {
@@ -119,13 +174,65 @@ class Field {
         }
     }
 
+    calculateBackground (path) {
+        for (let i=0; i<path.length; i++) {
+            let targetCell = this.getCell(path[i][0], path[i][1]);
+            let nextCell, previousCell;
+            if (i===0) {
+                nextCell = this.getCell(path[i+1][0], path[i+1][1])
+            } else if (i+1 === path.length) {
+                previousCell = this.getCell(path[i-1][0], path[i-1][1])
+            } else {
+                nextCell = this.getCell(path[i+1][0], path[i+1][1]);
+                previousCell = this.getCell(path[i-1][0], path[i-1][1])
+            }
+            Field.findCellBackground(targetCell, previousCell, nextCell)
+        }
+    }
+
+
+
+    static findCellBackground (targetCell, previousCell, nextCell) {
+        let cellBackground = ``;
+        if (previousCell && nextCell) {
+            cellBackground += Field.findPositionRelativeToMainCell(targetCell, previousCell);
+            cellBackground += `_`;
+            cellBackground += Field.findPositionRelativeToMainCell(targetCell, nextCell)
+        } else {
+            let otherCell;
+            if (previousCell) {
+                otherCell = previousCell
+            } else {
+                otherCell = nextCell
+            }
+            cellBackground += 'part_';
+            cellBackground += Field.findPositionRelativeToMainCell(targetCell, otherCell)
+        }
+        targetCell.isUsed = true;
+        targetCell.backgroundType = cellBackground;
+    }
+
+    static findPositionRelativeToMainCell (mainCell, adjustmentCell) {
+        if (mainCell.line>adjustmentCell.line) {
+            return 'top'
+        } else if (mainCell.line<adjustmentCell.line) {
+            return 'bottom'
+        } else if (mainCell.column>adjustmentCell.column) {
+            return 'left'
+        } else {
+            return 'right'
+        }
+    }
+
+
+
 }
 
 let field = new Field(8, 9);
 field.createEmptyField();
-
 (function setField () {
     field.setCellNumber(1,2, 3);
+   // field.setCellNumber(6,4, 1);
     field.setCellNumber(1,4, 2);
     field.setCellNumber(2,3, 23);
     field.setCellNumber(2,4, 2);
@@ -149,17 +256,16 @@ field.createEmptyField();
     field.setCellNumber(3,7, 2);
     field.setCellNumber(4,7, 2);
 }());
-let startTime = window.performance.now();
-field.countPossiblePaths();
-let finishTime = window.performance.now();
-console.log(finishTime-startTime);
+
+field.calculateField();
+
+
 $(document).ready(function () {
-
+    let startTime = window.performance.now();
     field.drawField();
-
+    let finishTime = window.performance.now();
+    console.log(finishTime-startTime);
 });
-
-
 
 
 
