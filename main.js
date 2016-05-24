@@ -7,7 +7,8 @@ class Field {
         this.width = width;
         this.height = height;
         this.cellWidthHeight = 50;
-        this.field = []
+        this.field = [];
+        this._advancedReserveField = []
     }
 
     createEmptyField () {
@@ -80,18 +81,13 @@ class Field {
         }
     }
 
-    countPossiblePaths (startCell ,targetCellsArray) {
+    countPossiblePaths (startCell ,targetCellsArray, pathNumber) {
         let self = this;
         let numberOfStep = 1;
         let paths = [];
         function findPath(currentCell, targetCell, currentStep, path=[[currentCell.line, currentCell.column]]) {
             if (currentStep === targetCell.number) {
                 if (currentCell.line === targetCell.line && currentCell.column === targetCell.column) {
-                    console.log('path has been found');
-                    console.log(path);
-                    console.log(startCell);
-                    console.log(targetCell);
-                    console.log(`-----`);
                     paths.push(path)
                 }
             } else if (Field.isPossiblePathExist(currentCell, targetCell, currentStep)) {
@@ -117,38 +113,98 @@ class Field {
         });
         if (paths.length===1) {
             this.calculateBackground(paths[0])
+        } else if (paths.length === 0) {
+            throw new Error ('Cannot join numbers. Number of possible paths is 0')
+        } else if (pathNumber) {
+            this.calculateBackground(paths[pathNumber-1])
         }
+        return paths.length
     }
 
     calculateField () {
+        let fieldIteration = 0;
         let notUsedNumbersBefore = 0;
         let notUsedNumbersNow;
+        mainLoop:
         while (notUsedNumbersNow = this.checkNotUsedNumbers()) {
+            fieldIteration++;
+            if (fieldIteration>10) break;
             if (notUsedNumbersNow === notUsedNumbersBefore) {
-                console.log('cannot solve');
-                break
-            }
-            notUsedNumbersBefore = notUsedNumbersNow;
-            for (let line=1; line<=this.height; line++) {
-                for (let column = 1; column<=this.width; column++) {
-                    let startCell = this.field[line][column];
-                    if (!startCell.isUsed && startCell.number) {
-                        let possibleCells = this.findPossibleTargetCells(startCell);
-                        this.countPossiblePaths(startCell, possibleCells)
+                this.cloneField();
+                let problemCell = this.findFirstNotUsedNumberFrom();
+                let possibleCells = this.findPossibleTargetCells(problemCell);
+                let diffPaths = this.countPossiblePaths(problemCell, possibleCells);
+                console.log('try something bad');
+                let badPaths = [];
+                for (let i=1; i<=diffPaths; i++) {
+                    this.reverseField();
+                   // this.countPossiblePaths(problemCell, possibleCells, i);
+                    console.log('still nothing?');
+                    try {
+                       // this.tryCalculateOtherNumbers();
+                    } catch (err) {
+                        console.log(e.name)
                     }
+                }
+
+
+
+                console.log(badPaths);
+                console.log(problemCell);
+                console.log(diffPaths);
+                console.log('cannot solve. Should use advanced method');
+                break mainLoop;
+            } else {
+                notUsedNumbersBefore = notUsedNumbersNow;
+                this.tryCalculateOtherNumbers();
+            }
+        }
+    }
+
+    tryCalculateOtherNumbers () {
+        for (let line =1; line<=this.height; line++) {
+            for (let column = 1; column<=this.width; column++) {
+                let cell = this.field[line][column];
+                if (cell.number && (!cell.isUsed)) {
+                    let possibleCells = this.findPossibleTargetCells(cell);
+                    this.countPossiblePaths(cell, possibleCells)
                 }
             }
         }
     }
+
+    findFirstNotUsedNumberFrom (startLine=1, startColumn=1) {
+        for (let line = startLine; line<=this.height; line++) {
+            for (let column = startColumn; column<=this.width; column++) {
+                let cell = this.field[line][column];
+                if (cell.number && (!cell.isUsed)) {
+                    return cell
+                }
+            }
+        }
+    }
+
+    cloneField () {
+        this._advancedReserveField = this.field.slice(0)
+    }
+
+    reverseField () {
+        this.field = this._advancedReserveField.slice(0)
+
+    }
+
+
 
     checkNotUsedNumbers () {
         let notUsedNumbers =0;
         this.field.forEach( (row) => {
-            row.forEach( (cell) => {
-                if (cell.number && !cell.isUsed) {
-                    notUsedNumbers++
-                }
-            })
+            if (row!==null) {
+                row.forEach( (cell) => {
+                    if ((cell!==null) && cell.number && !cell.isUsed) {
+                        notUsedNumbers++
+                    }
+                })
+            }
         });
         return notUsedNumbers
     }
