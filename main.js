@@ -122,20 +122,15 @@ class Field {
     }
 
     calculateField () {
-        let fieldIteration = 0;
         let notUsedNumbersBefore = 0;
         let notUsedNumbersNow;
         while (notUsedNumbersNow = this.checkNotUsedNumbers()) {
-            console.log('cannot solve. Should use advanced method');
-            fieldIteration++;
-            if (fieldIteration>6) break;
+            if (!this.checkNotUsedNumbers()) break;
             if (notUsedNumbersNow === notUsedNumbersBefore) {
                 this.makeExtraFieldCopy();
-
                 let problemCell = this.findFirstNotUsedNumberFrom();
                 let possibleCells = this.findPossibleTargetCells(problemCell);
                 let goodPath = this.findGoodPath(problemCell);
-                console.log(`goodPath is ${goodPath}`);
                 if (goodPath) {
                     this.countPossiblePaths(problemCell, possibleCells, goodPath);
                     this.tryCalculateOtherNumbers()
@@ -220,8 +215,7 @@ class Field {
                 goodPaths.push(i)
             }
         }
-        console.log(goodPaths);
-        if (goodPaths.length === 1) {
+        if (goodPaths.length >= 1) {
             return goodPaths[0]
         }
     }
@@ -395,34 +389,6 @@ class ParseHTMLTable {
 
 }
 
-//let field = new Field(8, 9);
-//field.createEmptyField();
-/*(function setField () {
-    field.setCellNumber(1,2, 3);
-   // field.setCellNumber(6,4, 1);
-    field.setCellNumber(1,4, 2);
-    field.setCellNumber(2,3, 23);
-    field.setCellNumber(2,4, 2);
-    field.setCellNumber(3,1,3);
-    field.setCellNumber(3,2,3);
-    field.setCellNumber(4,2, 3);
-    field.setCellNumber(4,3, 23);
-    field.setCellNumber(5,3, 5);
-    field.setCellNumber(5,8, 3);
-    field.setCellNumber(7,4,3);
-    field.setCellNumber(7,7,2);
-    field.setCellNumber(7,8, 3);
-    field.setCellNumber(8,5,1);
-    field.setCellNumber(8,7, 2);
-    field.setCellNumber(9,3, 5);
-    field.setCellNumber(9,4,3);
-    field.setCellNumber(9,5, 3);
-    field.setCellNumber(9,7,3);
-    field.setCellNumber(1,7, 2);
-    field.setCellNumber(2,7, 2);
-    field.setCellNumber(3,7, 2);
-    field.setCellNumber(4,7, 2);
-}());*/
 
 let rawHtml = ``;
 (function setRawHtml () {
@@ -438,29 +404,7 @@ let startTime = window.performance.now();
 gameField.calculateField();
 let finishTime = window.performance.now();
 console.log(finishTime-startTime);
-/*
-let field = new Field(7,6);
-field.createEmptyField();
-(function setBadField () {
-    field.setCellNumber(1,1, 1);
- field.setCellNumber(1,4, 3);
-    field.setCellNumber(1,5, 1);
-    field.setCellNumber(2,1, 6);
-    field.setCellNumber(3,1, 2);
-    field.setCellNumber(3,2, 2);
-    field.setCellNumber(3,5, 3);
-    field.setCellNumber(3,3, 6);
-    field.setCellNumber(3,4, 3);
-    field.setCellNumber(3,7, 3);
-    field.setCellNumber(5,3, 3);
-    field.setCellNumber(5,5, 3);
-    field.setCellNumber(6,5, 3);
-    field.setCellNumber(6,7, 3);
 
- }());
-field.calculateField();
-console.log(field.field);
-*/
 
 
 $(document).ready(function () {
