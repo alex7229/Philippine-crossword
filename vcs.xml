@@ -10,8 +10,12 @@
           <option name="url" value="https://github.com/tup1tsa/Calories.git" />
           <option name="userName" value="" />
         </UrlAndUserName>
+        <UrlAndUserName>
+          <option name="url" value="https://github.com/tup1tsa/express_server.git" />
+          <option name="userName" value="" />
+        </UrlAndUserName>
       </list>
     </option>
-    <option name="cloneParentDir" value="F:\One Drive\OneDrive\GIT\Node Projects\public" />
+    <option name="cloneParentDir" value="F:\One Drive\OneDrive\GIT" />
   </component>
 </application>
