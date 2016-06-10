@@ -455,7 +455,7 @@ class SubDomainAjax {
 
     getHTML () {
         return new Promise ( (resolve) => {
-            $.post( "/philippine-crosswords/getHTML", { pageUri: this.url} )
+            $.post( "/getPageHTML", { pageUri: this.url} )
                 .done( data => {
                     resolve (data)
                 });
